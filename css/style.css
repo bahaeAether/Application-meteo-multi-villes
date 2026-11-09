@@ -1,0 +1,153 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f6f8;
+  color: #222;
+  line-height: 1.6;
+}
+
+header {
+  text-align: center;
+  padding: 40px 20px;
+  background-color: #ffffff;
+}
+
+header h1 {
+  color: #246b55;
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+
+header p {
+  color: #666;
+}
+
+main {
+  width: 90%;
+  max-width: 1000px;
+  margin: 40px auto;
+}
+
+#recherche {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+#recherche h2 {
+  margin-bottom: 15px;
+}
+
+#recherche-formulaire {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+#ville-input {
+  width: 350px;
+  max-width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+button {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  background-color: #246b55;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #194d3d;
+}
+
+#chargement {
+  text-align: center;
+  color: #246b55;
+  margin: 20px 0;
+}
+
+#erreur {
+  text-align: center;
+  color: #c0392b;
+  margin: 20px 0;
+}
+
+#meteo-actuelle {
+  margin-top: 40px;
+}
+
+#meteo-actuelle h2,
+#section-previsions h2 {
+  margin-bottom: 20px;
+}
+
+#carte-meteo {
+  background-color: #ffffff;
+  padding: 30px;
+  border-radius: 15px;
+  text-align: center;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+}
+
+#ville-nom {
+  font-size: 1.5rem;
+  color: #246b55;
+}
+
+#icone-meteo {
+  font-size: 3rem;
+}
+
+#temperature {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin: 10px 0;
+}
+
+#carte-meteo div {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-top: 20px;
+}
+
+#section-previsions {
+  margin-top: 40px;
+}
+
+#previsions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 15px;
+}
+
+@media (max-width: 600px) {
+  main {
+    width: 92%;
+    margin: 25px auto;
+  }
+
+  #recherche-formulaire {
+    flex-direction: column;
+  }
+
+  #ville-input {
+    width: 100%;
+  }
+
+  #carte-meteo div {
+    flex-direction: column;
+    gap: 5px;
+  }
+}

@@ -3,16 +3,61 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <title>Tableau de bord météo</title>
+
     <link rel="stylesheet" href="css/style.css" />
   </head>
+
   <body>
     <header>
       <h1>Tableau de bord météo</h1>
-      <p>Consultez la météo de votre ville</p>
+      <p>Consultez les conditions météorologiques de votre ville.</p>
     </header>
 
-    <main></main>
+    <main>
+      <section id="recherche">
+        <h2>Rechercher une ville</h2>
+
+        <form id="recherche-formulaire">
+          <input
+            type="text"
+            id="ville-input"
+            placeholder="Exemple : Nador, Paris, Madrid..."
+            aria-label="Nom de la ville"
+          />
+
+          <button type="submit">Rechercher</button>
+        </form>
+      </section>
+
+      <p id="chargement" hidden>Chargement...</p>
+
+      <p id="erreur" role="alert" hidden></p>
+
+      <section id="meteo-actuelle" hidden>
+        <h2>Météo actuelle</h2>
+
+        <div id="carte-meteo">
+          <h3 id="ville-nom"></h3>
+
+          <p id="icone-meteo"></p>
+          <p id="description-meteo"></p>
+          <p id="temperature"></p>
+
+          <div>
+            <p>Humidité : <span id="humidite"></span></p>
+            <p>Vent : <span id="vent"></span></p>
+          </div>
+        </div>
+      </section>
+
+      <section id="section-previsions" hidden>
+        <h2>Prévisions des prochains jours</h2>
+
+        <div id="previsions"></div>
+      </section>
+    </main>
 
     <script type="module" src="js/main.js"></script>
   </body>
