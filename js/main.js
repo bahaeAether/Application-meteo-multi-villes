@@ -1,43 +1,66 @@
-import { rechercherVille } from "./api.js";
+import { recupererMeteo } from "./api.js";
 import { villes } from "./data.js";
 
 const formulaireRecherche = document.querySelector("#recherche-formulaire");
 const villeInput = document.querySelector("#ville-input");
 const messageErreur = document.querySelector("#erreur");
+const chargement = document.querySelector("#chargement");
 
-formulaireRecherche.addEventListener("submit", async (event) => {
+function trouverVille(nomVille) {
+  return villes.find(function (ville) {
+    return ville.nom.toLowerCase() === nomVille.toLowerCase();
+  });
+}
+
+formulaireRecherche.addEventListener("submit", async function (event) {
   event.preventDefault();
 
-  const ville = villeInput.value.trim();
+  const nomVille = villeInput.value.trim();
 
-  if (ville === "") {
+  if (nomVille === "") {
     messageErreur.textContent = "Veuillez saisir le nom d'une ville.";
     messageErreur.hidden = false;
     return;
   }
-  if (rechercheVille(ville) === undefined) {
-    messageErreur.textContent = "Le nom de la ville que vous avez saisi n'est pas valable.";
+
+  const ville = trouverVille(nomVille);
+
+  if (!ville) {
+    messageErreur.textContent =
+      "Cette ville n'est pas disponible dans notre liste.";
     messageErreur.hidden = false;
     return;
   }
 
   messageErreur.hidden = true;
+  chargement.hidden = false;
 
   try {
-    const data = await rechercherVille(rechercheVille(ville));
+    const data = await recupererMeteo(ville);
 
-    console.log("Réponse de l'API :", data);
+    console.log("Ville :", ville.nom);
+    console.log("Données météo :", data);
   } catch (error) {
+    messageErreur.textContent =
+      "Impossible de récupérer les données météo. Veuillez réessayer.";
+    messageErreur.hidden = false;
+
     console.error(error);
-  }
-  finally {
-    console.log("request Done!");
+  } finally {
+    chargement.hidden = true;
   }
 });
 
-function rechercheVille(cityName) {
-  return villes.find(ville => ville.nom.toLowerCase() === cityName.toLowerCase());
-}
+
+
+
+
+
+
+
+
+
+
 
 
 // const villes = [
@@ -49,7 +72,7 @@ function rechercheVille(cityName) {
 //   "casablanca",
 //   "rabat",
 //   "tanger",
-//   "Tétouan",
+//   "tetouane",
 //   "oujda",
 //   "kenitra",
 //   "meknes",
@@ -61,7 +84,8 @@ function rechercheVille(cityName) {
 //   "youssoufia",
 //   "beni mellal",
 //   "taza",
-//   "ouarzazate"
+//   "ouarzazate",
+//   "essaouira"
 // ];
 
 // async function recupererCoordonnees() {
@@ -87,12 +111,9 @@ function rechercheVille(cityName) {
 //         };
 //       }
 
-//       if (ville === "tanger") console.log(data);
-
-
 //       // Chercher le résultat correspondant au Maroc
 //       let resultatMaroc = data.results.find(function(resultat) {
-//         return resultat.country_code === "MA" || resultat.country_code === "EH";
+//         return resultat.country_code === "MA";
 //       });
 
 //       if (!resultatMaroc) {
