@@ -23,7 +23,7 @@
           <input
             type="text"
             id="ville-input"
-            placeholder="Exemple : Nador, Paris, Madrid..."
+            placeholder="Exemple : Casablanca, Marrakech, Rabat..."
             aria-label="Nom de la ville"
           />
 
@@ -57,6 +57,17 @@
 
         <div id="previsions"></div>
       </section>
+
+      <dialog id="dialog-horaires">
+        <div class="dialog-entete">
+          <h2 id="titre-horaires">Météo heure par heure</h2>
+          <button id="fermer-dialog" type="button" aria-label="Fermer">
+            ✕
+          </button>
+        </div>
+
+        <div id="liste-horaires"></div>
+      </dialog>
     </main>
 
     <script type="module" src="js/main.js"></script>
