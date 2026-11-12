@@ -7,10 +7,12 @@ const messageErreur = document.querySelector("#erreur");
 const chargement = document.querySelector("#chargement");
 const dialogHoraires = document.querySelector("#dialog-horaires");
 const boutonFermer = document.querySelector("#fermer-dialog");
+const boutonActualiser = document.querySelector("#bouton-actualiser");
 
 formulaireRecherche.addEventListener("submit", async function (event) {
   event.preventDefault();
   masquerAnciennesDonnees();
+  boutonActualiser.hidden = true;
 
   const nomVille = villeInput.value.trim();
 
@@ -26,7 +28,32 @@ formulaireRecherche.addEventListener("submit", async function (event) {
     return;
   }
 
+  await rechercherMeteo(ville);
+});
+
+boutonActualiser.addEventListener("click", function () {
+  const nomVille = villeInput.value.trim();
+  const ville = trouverVille(nomVille);
+
+  if (ville) {
+    rechercherMeteo(ville);
+  }
+});
+
+boutonFermer.addEventListener("click", function () {
+  dialogHoraires.close();
+});
+
+dialogHoraires.addEventListener("click", function (event) {
+  if (event.target === dialogHoraires) {
+    dialogHoraires.close();
+  }
+});
+
+async function rechercherMeteo(ville) {
   messageErreur.hidden = true;
+  masquerAnciennesDonnees();
+  boutonActualiser.hidden = true;
   chargement.hidden = false;
 
   try {
@@ -44,6 +71,7 @@ formulaireRecherche.addEventListener("submit", async function (event) {
     console.log(data);
   } catch (error) {
     console.error(error);
+    boutonActualiser.hidden = false;
 
     if (!navigator.onLine) {
       afficherErreur("Vérifiez votre connexion Internet.");
@@ -59,17 +87,7 @@ formulaireRecherche.addEventListener("submit", async function (event) {
   } finally {
     chargement.hidden = true;
   }
-});
-
-boutonFermer.addEventListener("click", function () {
-  dialogHoraires.close();
-});
-
-dialogHoraires.addEventListener("click", function (event) {
-  if (event.target === dialogHoraires) {
-    dialogHoraires.close();
-  }
-});
+}
 
 function trouverVille(nomVille) {
   return villes.find(function (ville) {
