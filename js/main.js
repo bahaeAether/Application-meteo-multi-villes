@@ -10,21 +10,19 @@ const boutonFermer = document.querySelector("#fermer-dialog");
 
 formulaireRecherche.addEventListener("submit", async function (event) {
   event.preventDefault();
+  masquerAnciennesDonnees();
 
   const nomVille = villeInput.value.trim();
 
   if (nomVille === "") {
-    messageErreur.textContent = "Veuillez saisir le nom d'une ville.";
-    messageErreur.hidden = false;
+    afficherErreur("Veuillez saisir le nom d'une ville.");
     return;
   }
 
   const ville = trouverVille(nomVille);
 
   if (!ville) {
-    messageErreur.textContent =
-      "Cette ville n'est pas disponible dans notre liste.";
-    messageErreur.hidden = false;
+    afficherErreur("Cette ville n'est pas disponible dans notre liste.");
     return;
   }
 
@@ -33,16 +31,31 @@ formulaireRecherche.addEventListener("submit", async function (event) {
 
   try {
     const data = await recupererMeteo(ville);
+    if (!data.current) {
+      throw new Error("Données météo actuelles indisponibles.");
+    }
+    if (!data.daily || !data.daily.time) {
+      throw new Error("Prévisions météo indisponibles.");
+    }
 
     afficherMeteoActuelle(ville, data);
     afficherPrevisions(data);
-    console.log("Données météo :", data);
-  } catch (error) {
-    messageErreur.textContent =
-      "Impossible de récupérer les données météo. Veuillez réessayer.";
-    messageErreur.hidden = false;
 
+    console.log(data);
+  } catch (error) {
     console.error(error);
+
+    if (!navigator.onLine) {
+      afficherErreur("Vérifiez votre connexion Internet.");
+    } else if (error.message.startsWith("Erreur API")) {
+      afficherErreur(
+        "Le service météo est temporairement indisponible : " + error,
+      );
+    } else if (error.message.includes("indisponibles")) {
+      afficherErreur("Les données météo demandées sont indisponibles.");
+    } else {
+      afficherErreur("Une erreur est survenue. Veuillez réessayer.");
+    }
   } finally {
     chargement.hidden = true;
   }
@@ -64,22 +77,50 @@ function trouverVille(nomVille) {
   });
 }
 
-function obtenirDescriptionMeteo(code) {
+function afficherErreur(message) {
+  messageErreur.textContent = message;
+  messageErreur.hidden = false;
+}
+
+function obtenirDescriptionMeteo(code, nuit = false) {
   const weatherObject = WEATHER_CODES[code];
 
-  if (weatherObject) return weatherObject;
+  if (!weatherObject) {
+    return {
+      description: "Conditions inconnues",
+      icone: "❔",
+    };
+  }
 
   return {
-    description: "Conditions inconnues",
-    icone: "❔",
+    description: weatherObject.description,
+    icone: nuit
+      ? weatherObject.iconeNuit || weatherObject.icone
+      : weatherObject.icone,
   };
+}
+
+function estLaNuit(dateHeure, daily) {
+  const date = dateHeure.slice(0, 10);
+
+  const index = daily.time.indexOf(date);
+
+  if (index === -1 || !daily.sunrise[index] || !daily.sunset[index]) {
+    return false;
+  }
+
+  const sunrise = daily.sunrise[index];
+  const sunset = daily.sunset[index];
+
+  return dateHeure < sunrise || dateHeure >= sunset;
 }
 
 function afficherMeteoActuelle(ville, data) {
   const meteo = data.current;
   const unite = data.current_units;
 
-  const condition = obtenirDescriptionMeteo(meteo.weather_code);
+  const nuit = estLaNuit(meteo.time, data.daily);
+  const condition = obtenirDescriptionMeteo(meteo.weather_code, nuit);
 
   document.querySelector("#ville-nom").textContent = ville.nom;
 
@@ -89,13 +130,18 @@ function afficherMeteoActuelle(ville, data) {
     condition.description;
 
   document.querySelector("#temperature").textContent =
-    meteo.temperature_2m + " " + unite.temperature_2m;
+    (meteo.temperature_2m ?? "Indisponible") +
+    (meteo.temperature_2m != null ? " " + unite.temperature_2m : "");
 
   document.querySelector("#humidite").textContent =
-    meteo.relative_humidity_2m + " " + unite.relative_humidity_2m;
+    (meteo.relative_humidity_2m ?? "Indisponible") +
+    (meteo.relative_humidity_2m != null
+      ? " " + unite.relative_humidity_2m
+      : "");
 
   document.querySelector("#vent").textContent =
-    meteo.wind_speed_10m + " " + unite.wind_speed_10m;
+    (meteo.wind_speed_10m ?? "Indisponible") +
+    (meteo.wind_speed_10m != null ? " " + unite.wind_speed_10m : "");
 
   document.querySelector("#meteo-actuelle").hidden = false;
 }
@@ -105,28 +151,23 @@ function afficherPrevisions(data) {
   const unite = data.daily_units;
   const conteneur = document.querySelector("#previsions");
 
-  // Vider les anciennes prévisions
   conteneur.innerHTML = "";
 
-  // Vérifier si les données sont disponibles
   if (!previsions || !previsions.time) {
     conteneur.textContent = "Prévisions indisponibles.";
     document.querySelector("#section-previsions").hidden = false;
     return;
   }
 
-  // Parcourir les jours de prévision
   previsions.time.forEach(function (date, index) {
     const condition = obtenirDescriptionMeteo(previsions.weather_code[index]);
 
-    // Formater la date en français
     const dateFormatee = new Intl.DateTimeFormat("fr-FR", {
       weekday: "long",
       day: "numeric",
       month: "short",
     }).format(new Date(date + "T12:00:00"));
 
-    // Créer la carte
     const carte = document.createElement("article");
     carte.classList.add("carte-prevision");
     carte.setAttribute("role", "button");
@@ -143,7 +184,6 @@ function afficherPrevisions(data) {
       }
     });
 
-    // Créer les éléments de la carte
     const jour = document.createElement("h3");
     jour.textContent = dateFormatee;
 
@@ -169,10 +209,8 @@ function afficherPrevisions(data) {
         ? " " + unite.temperature_2m_min
         : "");
 
-    // Ajouter les éléments à la carte
     carte.append(jour, icone, description, temperatureMax, temperatureMin);
 
-    // Ajouter la carte au conteneur
     conteneur.appendChild(carte);
   });
 
@@ -195,34 +233,33 @@ function afficherHoraires(data, dateSelectionnee) {
     return;
   }
 
-  // Formater la date du titre
   const dateFormatee = new Intl.DateTimeFormat("fr-FR", {
-    weekday: "long",
+    weekday: "short",
     day: "numeric",
-    month: "long",
+    month: "short",
   }).format(new Date(dateSelectionnee + "T12:00:00"));
 
   titre.textContent = "Météo heure par heure - " + dateFormatee;
 
-  // Parcourir les heures
   horaires.time.forEach(function (heure, index) {
     if (heure.startsWith(dateSelectionnee)) {
-      const condition = obtenirDescriptionMeteo(horaires.weather_code[index]);
+      const nuit = estLaNuit(heure, data.daily);
 
-      // Créer la carte
+      const condition = obtenirDescriptionMeteo(
+        horaires.weather_code[index],
+        nuit,
+      );
+
       const carte = document.createElement("article");
       carte.classList.add("carte-horaire");
 
-      // Heure
       const heureElement = document.createElement("h3");
       heureElement.textContent = heure.slice(11, 16);
 
-      // Icône météo
       const icone = document.createElement("span");
       icone.classList.add("icone-horaire");
       icone.textContent = condition.icone;
 
-      // Conteneur des informations
       const informations = document.createElement("div");
       informations.classList.add("informations-horaires");
 
@@ -233,28 +270,33 @@ function afficherHoraires(data, dateSelectionnee) {
       const temperature = document.createElement("p");
       temperature.textContent =
         "Température : " +
-        horaires.temperature_2m[index] +
-        " " +
-        unite.temperature_2m;
+        (horaires.temperature_2m[index] ?? "Indisponible") +
+        (horaires.temperature_2m[index] != null
+          ? " " + unite.temperature_2m_max
+          : "");
 
       const ressenti = document.createElement("p");
       ressenti.textContent =
         "Ressenti : " +
-        horaires.apparent_temperature[index] +
-        " " +
-        unite.apparent_temperature;
+        (horaires.apparent_temperature[index] ?? "Indisponible") +
+        (unite.apparent_temperature[index] != null
+          ? " " + unite.apparent_temperature
+          : "");
 
       const nuages = document.createElement("p");
       nuages.textContent =
-        "Nuages : " + horaires.cloud_cover[index] + " " + unite.cloud_cover;
+        "Nuages : " +
+        (horaires.cloud_cover[index] ?? "Indisponible") +
+        (unite.cloud_cover[index] != null ? " " + unite.cloud_cover : "");
 
       const vent = document.createElement("p");
       vent.textContent =
-        "Vent : " + horaires.wind_speed_10m[index] + " " + unite.wind_speed_10m;
+        "Vent : " +
+        (horaires.wind_speed_10m[index] ?? "Indisponible") +
+        (unite.wind_speed_10m[index] != null ? " " + unite.wind_speed_10m : "");
 
       informations.append(description, temperature, ressenti, nuages, vent);
 
-      // Ajouter les éléments à la carte
       carte.append(heureElement, icone, informations);
 
       liste.appendChild(carte);
@@ -262,6 +304,13 @@ function afficherHoraires(data, dateSelectionnee) {
   });
 
   dialogHoraires.showModal();
+}
+
+function masquerAnciennesDonnees() {
+  document.querySelector("#meteo-actuelle").hidden = true;
+  document.querySelector("#section-previsions").hidden = true;
+
+  dialogHoraires.close();
 }
 
 // const villes = [
